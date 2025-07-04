@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
-import '../models/comment.dart';
+import 'package:get/get.dart';
 import '../models/post.dart';
-import '../services/api_service.dart';
+import '../controllers/comment_controller.dart';
 
 class PostDetailPage extends StatelessWidget {
   final Post post;
-
   PostDetailPage({required this.post});
 
   @override
   Widget build(BuildContext context) {
+    final commentController = Get.put(CommentController(post.id));
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(title: Text("Post")),
@@ -40,23 +41,31 @@ class PostDetailPage extends StatelessWidget {
             padding: EdgeInsets.symmetric(horizontal: 16),
             child: Text("Most Relevant", style: TextStyle(color: Colors.grey)),
           ),
-          // Dummy comments list
           Expanded(
-            child: ListView.builder(
-              itemCount: 5,
-              padding: EdgeInsets.all(16),
-              itemBuilder: (context, index) {
-                return ListTile(
-                  leading: CircleAvatar(
-                    backgroundImage: NetworkImage('https://i.pravatar.cc/150?img=${index + 10}'),
-                  ),
-                  title: Text("User ${index + 1}"),
-                  subtitle: Text("This is a comment."),
+            child: Obx(() {
+              if (commentController.isLoading.value) {
+                return Center(child: CircularProgressIndicator());
+              } else if (commentController.comments.isEmpty) {
+                return Center(child: Text("No comments found"));
+              } else {
+                return ListView.builder(
+                  itemCount: commentController.comments.length,
+                  padding: EdgeInsets.all(16),
+                  itemBuilder: (context, index) {
+                    final comment = commentController.comments[index];
+                    return ListTile(
+                      leading: CircleAvatar(
+                        backgroundImage: NetworkImage('https://i.pravatar.cc/150?img=${index + 10}'),
+                      ),
+                      title: Text(comment.name),
+                      subtitle: Text(comment.body),
+                    );
+                  },
                 );
-              },
-            ),
+              }
+            }),
           ),
-          // Comment input at the bottom
+
           Padding(
             padding: EdgeInsets.all(8),
             child: Row(
